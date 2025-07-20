@@ -24,7 +24,7 @@ def extract_roi_text(image_path, roi_coords):
     
     roi = image[y1:y2, x1:x2]
     
-    ocr = PaddleOCR(use_angle_cls=True, lang='en', show_log=False)
+    ocr = PaddleOCR(use_angle_cls=True, lang='en', show_log=False, use_gpu=True, gpu_id=0)
     result = ocr.ocr(roi, cls=True)
     
     extracted_text = []
@@ -67,6 +67,7 @@ def main():
     image_path = "POST_EVT_4/page_1.png"
     
     print("PaddleOCR을 사용한 ROI 텍스트 인식 시작")
+    print("GPU 사용: 활성화")
     print("=" * 50)
     
     if not os.path.exists(image_path):
