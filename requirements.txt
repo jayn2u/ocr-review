@@ -1,9 +1,9 @@
-opencv-python==4.6.0.66
-numpy==1.24.3
-Pillow==10.0.1
+opencv-python==4.9.0.80
+numpy==1.26.4
+Pillow==10.2.0
 paddlepaddle-gpu==2.6.2
-paddleocr==2.7.0.3
-pandas==2.0.3
-torch==2.0.1
-torchvision==0.15.2
+paddleocr==3.1.0
+pandas==2.2.0
+torch==2.2.0
+torchvision==0.17.0
 pathlib2==2.3.7

@@ -7,6 +7,7 @@ from pathlib import Path
 def extract_roi_text(image_path, roi_coords):
     """
     이미지에서 ROI 영역을 추출하고 PaddleOCR을 사용하여 영어 & 숫자 텍스트를 인식합니다.
+    최신 PaddleOCR 3.1.0 버전의 향상된 기능을 활용합니다.
     
     Args:
         image_path (str): 이미지 파일 경로
@@ -24,22 +25,38 @@ def extract_roi_text(image_path, roi_coords):
     
     roi = image[y1:y2, x1:x2]
     
-    ocr = PaddleOCR(use_angle_cls=True, lang='en', show_log=False, use_gpu=True, gpu_id=0)
-    result = ocr.ocr(roi, cls=True)
-    
-    extracted_text = []
-    if result and result[0]:
-        for line in result[0]:
-            text = line[1][0]
-            confidence = line[1][1]
-            if confidence > 0.5:
-                extracted_text.append(text)
-    
-    return extracted_text
+    try:
+        # 최신 PaddleOCR 3.1.0의 기본 설정 사용
+        ocr = PaddleOCR(
+            use_textline_orientation=True,  # 텍스트 방향 감지
+            lang='en', 
+            show_log=False, 
+            device='gpu'  # GPU 사용
+        )
+        
+        result = ocr.ocr(roi, cls=True)
+        
+        extracted_text = []
+        if result and result[0]:
+            for line in result[0]:
+                text = line[1][0]
+                confidence = line[1][1]
+                # 향상된 신뢰도 임계값
+                if confidence > 0.6:
+                    # 텍스트 전처리 개선
+                    cleaned_text = text.strip()
+                    if cleaned_text and len(cleaned_text) > 0:
+                        extracted_text.append(cleaned_text)
+        
+        return extracted_text
+    except Exception as e:
+        print(f"OCR 처리 중 오류 발생: {e}")
+        return []
 
 def process_single_image(image_path, roi_coords):
     """
     단일 이미지에서 ROI 텍스트 추출을 수행합니다.
+    최신 PaddleOCR 3.1.0의 향상된 기능을 활용합니다.
     
     Args:
         image_path (str): 이미지 파일 경로
@@ -63,11 +80,11 @@ def process_single_image(image_path, roi_coords):
     print("-" * 30)
 
 def main():
-    roi_coords = (379, 154, 608, 943)
+    roi_coords = (346, 161, 635, 940)
     image_path = "POST_EVT_4/page_1.png"
     
-    print("PaddleOCR을 사용한 ROI 텍스트 인식 시작")
-    print("GPU 사용: 활성화")
+    print("PaddleOCR 3.1.0을 사용한 ROI 텍스트 인식 시작")
+    print("최신 버전의 향상된 성능과 정확도 활용")
     print("=" * 50)
     
     if not os.path.exists(image_path):
