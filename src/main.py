@@ -6,6 +6,41 @@ from pathlib import Path
 import csv
 from datetime import datetime
 
+def preprocess_image(image):
+    """
+    OCR 인식률 향상을 위한 이미지 전처리를 수행합니다.
+    
+    Args:
+        image: 원본 이미지
+    
+    Returns:
+        preprocessed_image: 전처리된 이미지
+    """
+    # 그레이스케일 변환
+    if len(image.shape) == 3:
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    else:
+        gray = image.copy()
+    
+    # 노이즈 제거 (가우시안 블러)
+    denoised = cv2.GaussianBlur(gray, (1, 1), 0)
+    
+    # 적응형 히스토그램 평활화로 대비 향상
+    clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+    enhanced = clahe.apply(denoised)
+    
+    # 이진화 (Otsu's method)
+    _, binary = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    
+    # 모폴로지 연산으로 텍스트 선명화
+    kernel = np.ones((1, 1), np.uint8)
+    morphed = cv2.morphologyEx(binary, cv2.MORPH_CLOSE, kernel)
+    
+    # 약간의 가우시안 블러로 텍스트 경계 부드럽게
+    final = cv2.GaussianBlur(morphed, (1, 1), 0)
+    
+    return final
+
 def extract_roi_text(image_path, roi_coords):
     """
     이미지에서 ROI 영역을 추출하고 PaddleOCR을 사용하여 텍스트를 인식합니다.
@@ -26,6 +61,9 @@ def extract_roi_text(image_path, roi_coords):
     
     roi = image[y1:y2, x1:x2]
     
+    # 전처리 수행
+    preprocessed_roi = preprocess_image(roi)
+    
     try:
         ocr = PaddleOCR(
             lang='en', 
@@ -33,7 +71,8 @@ def extract_roi_text(image_path, roi_coords):
             show_log=False
         )
         
-        result = ocr.ocr(roi, cls=True)
+        # 전처리된 이미지로 OCR 수행
+        result = ocr.ocr(preprocessed_roi, cls=True)
         
         extracted_text = []
         if result and result[0]:
@@ -111,6 +150,7 @@ def process_pipeline(start_page=2, end_page=51):
     print(f"처리 범위: 페이지 {start_page} ~ {end_page}")
     print(f"ROI 좌표: {roi_coords}")
     print(f"기본 경로: {base_path}")
+    print(f"전처리 과정: 그레이스케일 변환 → 노이즈 제거 → 대비 향상 → 이진화 → 모폴로지 연산")
     
     output_filename = "my_type1.csv"
     
