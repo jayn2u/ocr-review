@@ -68,6 +68,7 @@ def extract_roi_text(image_path, roi_coords):
         ocr = PaddleOCR(
             lang='en', 
             device='gpu',
+            use_angle_cls=False,
             show_log=False
         )
         
